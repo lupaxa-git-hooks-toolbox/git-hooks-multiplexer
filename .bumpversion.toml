@@ -1,0 +1,42 @@
+# Default version file for makefile-skills versioning (bump-my-version).
+
+[tool.bumpversion]
+current_version = "0.0.0"
+
+parse = "(?P<version>.*)"
+serialize = [
+  "{version}",
+]
+
+search = "{current_version}"
+replace = "{new_version}"
+regex = false
+ignore_missing_version = false
+ignore_missing_files = false
+
+allow_dirty = false
+commit = true
+message = "Release {new_version}"
+commit_args = ""
+
+tag = true
+sign_tags = false
+tag_name = "v{new_version}"
+tag_message = "Release {new_version}"
+
+setup_hooks = []
+pre_commit_hooks = []
+post_commit_hooks = [
+  "git push",
+  "git push --tags",
+]
+
+[[tool.bumpversion.files]]
+filename = "src/multiplexer"
+search = '__version__ = "{current_version}"'
+replace = '__version__ = "{new_version}"'
+
+[[tool.bumpversion.files]]
+filename = "pyproject.toml"
+search = 'version = "{current_version}"'
+replace = 'version = "{new_version}"'

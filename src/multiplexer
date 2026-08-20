@@ -1,0 +1,171 @@
+#!/usr/bin/env python3
+
+# -------------------------------------------------------------------------------- #
+# Description                                                                      #
+# -------------------------------------------------------------------------------- #
+# Self-contained Git hook multiplexer. Copy or symlink this one file into          #
+# .git/hooks under the hook name you want. No pip install is required.             #
+#                                                                                  #
+#   cp src/multiplexer .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit     #
+#   ln -s /path/to/src/multiplexer .git/hooks/commit-msg                           #
+#                                                                                  #
+# The hook type is the name Git invoked (basename of argv[0]), not this file's     #
+# name. The same file can be installed as pre-commit, commit-msg, pre-push, and    #
+# any other valid hook.                                                            #
+#                                                                                  #
+# It then runs, in alphabetic order, every executable under hooks/<hook-type>/     #
+# at the ROOT of the git repository. Git arguments and stdin are forwarded.        #
+# Most subhooks just run. A subhook that needs a human should read /dev/tty.       #
+# Stdout and stderr stay on the terminal so optional prompts appear.               #
+# A non-zero exit aborts.                                                          #
+# -------------------------------------------------------------------------------- #
+
+from __future__ import annotations
+
+import os
+import sys
+from subprocess import PIPE, Popen
+
+__version__ = "0.0.0"
+
+hooks_base = "hooks"
+
+VALID_GIT_HOOKS = frozenset(
+    {
+        "applypatch-msg",
+        "commit-msg",
+        "fsmonitor-watchman",
+        "p4-changelist",
+        "p4-post-changelist",
+        "p4-pre-submit",
+        "p4-prepare-changelist",
+        "post-applypatch",
+        "post-checkout",
+        "post-commit",
+        "post-index-change",
+        "post-merge",
+        "post-receive",
+        "post-rewrite",
+        "post-update",
+        "pre-applypatch",
+        "pre-auto-gc",
+        "pre-commit",
+        "pre-merge-commit",
+        "pre-push",
+        "pre-rebase",
+        "pre-receive",
+        "prepare-commit-msg",
+        "proc-receive",
+        "push-to-checkout",
+        "reference-transaction",
+        "sendemail-validate",
+        "update",
+    }
+)
+
+
+def hook_type_from_invocation(argv0: str) -> str:
+    """Return the hook name Git invoked, without following a symlink."""
+    return os.path.basename(os.path.normpath(argv0))
+
+
+def find_repo_root() -> str:
+    """Return the working-tree root, or exit if Git has no work tree."""
+    process = Popen(
+        ["git", "rev-parse", "--show-toplevel"],  # noqa: S603,S607
+        stdout=PIPE,
+        stderr=PIPE,
+    )
+    stdout, stderr = process.communicate()
+    repo_root = stdout.decode("utf-8", errors="replace").rstrip()
+
+    if process.returncode != 0 or not repo_root or not os.path.isdir(repo_root):
+        detail = stderr.decode("utf-8", errors="replace").strip()
+        if detail:
+            print(detail, file=sys.stderr)
+        else:
+            print("No git working tree found.", file=sys.stderr)
+        sys.exit(1)
+    return repo_root
+
+
+def check_hook_type(argv0: str | None = None) -> str:
+    """Return the invoked hook type, or exit if the name is not a Git hook."""
+    if argv0 is None:
+        argv0 = sys.argv[0]
+    hook_type = hook_type_from_invocation(argv0)
+    if hook_type not in VALID_GIT_HOOKS:
+        print(f"Unknown hook type: {hook_type}", file=sys.stderr)
+        sys.exit(1)
+    return hook_type
+
+
+def get_subhooks_list(hook_type: str) -> list[str]:
+    """Return executable subhooks for *hook_type*, or exit 0 if none exist."""
+    files: list[str] = []
+    hooks_dir = os.path.join(hooks_base, hook_type)
+    if not os.path.isdir(hooks_dir):
+        sys.exit(0)
+
+    for name in os.listdir(hooks_dir):
+        if name.startswith("."):
+            continue
+        full_file_path = os.path.join(hooks_dir, name)
+        if os.path.isfile(full_file_path) and os.access(full_file_path, os.X_OK):
+            files.append(full_file_path)
+    hooks = sorted(files)
+
+    if not hooks:
+        sys.exit(0)
+
+    return hooks
+
+
+def read_hook_stdin() -> bytes:
+    """Capture Git's stdin once so every subhook can receive the same payload."""
+    stream = getattr(sys.stdin, "buffer", sys.stdin)
+    if hasattr(stream, "isatty") and stream.isatty():
+        return b""
+    data = stream.read()
+    if isinstance(data, str):
+        return data.encode("utf-8")
+    return data or b""
+
+
+def run_the_subhooks(
+    cmdline: list[str] | None,
+    hook_type: str,
+    hooks: list[str],
+    stdin_payload: bytes = b"",
+) -> None:
+    """Run each subhook. Inherit the terminal; replay Git stdin; fail fast."""
+    if cmdline is None:
+        cmdline = []
+
+    for hook_path in hooks:
+        hook_id = os.path.join(hooks_base, hook_type, os.path.basename(hook_path))
+        print(f"Running hook {hook_id}...")
+        sys.stdout.flush()
+        sys.stderr.flush()
+
+        proc = Popen([hook_path] + list(cmdline), stdin=PIPE)  # noqa: S603
+        proc.communicate(stdin_payload)
+
+        if proc.returncode != 0:
+            print(f"Hook {hook_id} failed. Aborting...", file=sys.stderr)
+            sys.exit(proc.returncode)
+
+
+def main(cmdline: list[str] | None = None) -> int:
+    """Run the multiplexer for the hook name in ``sys.argv[0]``."""
+    if cmdline is None:
+        cmdline = []
+    os.chdir(find_repo_root())
+    hook_type = check_hook_type()
+    hooks = get_subhooks_list(hook_type)
+    run_the_subhooks(cmdline, hook_type, hooks, read_hook_stdin())
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))
