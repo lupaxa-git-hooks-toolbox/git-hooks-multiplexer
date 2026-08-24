@@ -26,7 +26,7 @@ import os
 import sys
 from subprocess import PIPE, Popen
 
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 
 hooks_base = "hooks"
 
