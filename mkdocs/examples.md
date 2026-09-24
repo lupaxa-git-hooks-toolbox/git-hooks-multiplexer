@@ -2,7 +2,7 @@
 
 The only file you copy is `src/multiplexer`. There is no package install.
 
-## Copy into several hook types
+## Copy into Several Hook Types
 
 ```bash
 MUX=/path/to/git-hooks-multiplexer/src/multiplexer
@@ -16,7 +16,7 @@ chmod +x .git/hooks/pre-commit .git/hooks/pre-merge-commit \
 
 A symlink to the same file works the same way if you prefer one copy on disk.
 
-## Confirm commits to master
+## Confirm Commits to Master
 
 A subhook that prompts should open `/dev/tty` so Git's stdin stays free:
 
@@ -37,7 +37,7 @@ esac
 
 Save as `hooks/pre-commit/02-confirm_default_branch` and `chmod +x` it.
 
-## Record a pre-push payload
+## Record a Pre-Push Payload
 
 ```bash
 #!/bin/sh
@@ -47,7 +47,7 @@ exit 0
 
 Both this hook and a later `02-…` check receive the same ref lines.
 
-## Ordered lint then test
+## Ordered Lint Then Test
 
 ```text
 hooks/pre-commit/01-ruff

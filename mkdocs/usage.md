@@ -1,6 +1,6 @@
 # Usage
 
-## Repository layout
+## Repository Layout
 
 Install the multiplexer under the Git hook name. Commit subhooks with the
 project:
@@ -22,7 +22,7 @@ they can run [Setup Git Hooks](https://setup-git-hooks.thelupaxaproject.org/)
 when order matters.
 Hidden files are skipped. Only regular files with the executable bit set run.
 
-## Interactive and non-interactive subhooks
+## Interactive and Non-Interactive Subhooks
 
 Most subhooks just run and exit. A subhook that needs a human (for example a
 yes/no confirm before committing to `master`) should read the keyboard from
@@ -31,17 +31,17 @@ yes/no confirm before committing to `master`) should read the keyboard from
 The multiplexer inherits stdout and stderr so those optional prompts appear
 immediately. Hooks that do not prompt are unchanged.
 
-## Arguments and stdin
+## Arguments and Stdin
 
 Git's hook arguments are passed through to every subhook. Stdin is read once
 and replayed to each child, so a second `pre-push` check still sees the refs.
 
-## Fail-fast
+## Fail-Fast
 
 If a subhook exits non-zero, remaining subhooks do not run. The multiplexer
 exits with that same code so Git aborts the operation.
 
-## Missing configuration
+## Missing Configuration
 
 If `hooks/<type>/` does not exist, or it contains no executables, the
 multiplexer exits 0 without printing. Install the hook early; add subhooks

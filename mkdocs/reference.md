@@ -13,7 +13,7 @@
 Do not resolve the real path of the multiplexer when deciding the hook type.
 A symlink named `pre-commit` must stay `pre-commit`.
 
-## Supported hook names
+## Supported Hook Names
 
 The allowlist matches current [githooks(5)](https://git-scm.com/docs/githooks)
 names, including `pre-merge-commit`, `pre-push`, `commit-msg`,
@@ -22,7 +22,7 @@ names, including `pre-merge-commit`, `pre-push`, `commit-msg`,
 
 An unknown installed name exits 1 with `Unknown hook type`.
 
-## Hooks that use stdin
+## Hooks That Use Stdin
 
 These hooks receive a payload on stdin. The multiplexer replays it to every
 subhook:
@@ -35,7 +35,7 @@ subhook:
 | `post-rewrite`           | Rewritten commit pairs                |
 | `reference-transaction`  | Reference update lines                |
 
-## Hooks that use arguments
+## Hooks That Use Arguments
 
 | Hook                  | Typical arguments                      |
 | :-------------------- | :------------------------------------- |
@@ -46,7 +46,7 @@ subhook:
 | `post-checkout`       | Previous HEAD, new HEAD, flag          |
 | `post-merge`          | Squash flag                            |
 
-## Exit codes
+## Exit Codes
 
 | Code        | Meaning                                      |
 | :---------- | :------------------------------------------- |
@@ -54,7 +54,7 @@ subhook:
 | Subhook `N` | First failing subhook's exit code            |
 | `1`         | Unknown hook type or no Git working tree     |
 
-## Hook file
+## Hook File
 
 The product is the single file `src/multiplexer`. It uses the Python standard
 library only. There is no package to install or import.

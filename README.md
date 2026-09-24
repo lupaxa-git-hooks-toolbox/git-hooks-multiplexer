@@ -4,7 +4,7 @@
     </a>
 </p>
 
-<h1 align="center">Multiplexer</h1>
+<h1 align="center">Git Hooks Multiplexer</h1>
 
 One self-contained script. Copy it into `.git/hooks` — no pip install, no
 package. It runs every executable under `hooks/<hook-type>/` at the

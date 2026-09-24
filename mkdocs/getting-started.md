@@ -1,4 +1,4 @@
-# Getting started
+# Getting Started
 
 ## Requirements
 
@@ -8,7 +8,7 @@
 The multiplexer is one file. There is nothing to pip install and no package
 to import.
 
-## Install as a Git hook
+## Install as a Git Hook
 
 [Setup Git Hooks](https://setup-git-hooks.thelupaxaproject.org/) (`setup-hooks`)
 can install this multiplexer into `.git/hooks` for you. Point
@@ -41,7 +41,7 @@ A symlink is also fine if you keep a clone of this repo on disk:
 ln -s /path/to/git-hooks-multiplexer/src/multiplexer .git/hooks/pre-commit
 ```
 
-## Add subhooks
+## Add Subhooks
 
 Create executables under `hooks/<type>/` at the **repository root** (not
 inside `.git/hooks`):
@@ -55,7 +55,7 @@ chmod +x hooks/pre-commit/*
 Git then runs `.git/hooks/pre-commit`, which runs those files in alphabetic
 order.
 
-## First check
+## First Check
 
 ```bash
 .git/hooks/pre-commit
@@ -64,7 +64,7 @@ order.
 If `hooks/pre-commit/` is missing or empty, the multiplexer exits 0 and Git
 continues.
 
-## Developing this repository
+## Developing This Repository
 
 The steps below are only for changing the multiplexer itself. The hook is the
 single file `src/multiplexer`.
