@@ -81,10 +81,7 @@ class ReapPtyChildTests(unittest.TestCase):
         fd = 7
         with (
             unittest.mock.patch("test_multiplexer.select.select", return_value=([fd], [], [])),
-            unittest.mock.patch(
-                "test_multiplexer.os.read",
-                side_effect=OSError(errno.EIO, "Input/output error"),
-            ),
+            unittest.mock.patch("test_multiplexer.os.read", side_effect=OSError(errno.EIO, "Input/output error")),
             unittest.mock.patch("test_multiplexer.os.waitpid", return_value=(pid, 0)) as waitpid,
         ):
             status = _reap_pty_child(pid, fd, timeout=1.0)
@@ -93,32 +90,15 @@ class ReapPtyChildTests(unittest.TestCase):
 
 
 def _run(args, cwd, env=None, input_bytes=None):
-    return subprocess.run(
-        args,
-        cwd=cwd,
-        env=env,
-        input=input_bytes,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        check=False,
-    )
+    return subprocess.run(args, cwd=cwd, env=env, input=input_bytes, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False)
 
 
 class HookTypeTests(unittest.TestCase):
     def test_uses_invoked_name_not_source_file(self):
         mux = _load_script()
-        self.assertEqual(
-            mux.hook_type_from_invocation("/repo/.git/hooks/pre-commit"),
-            "pre-commit",
-        )
-        self.assertEqual(
-            mux.hook_type_from_invocation("/opt/toolbox/src/multiplexer"),
-            "multiplexer",
-        )
-        self.assertEqual(
-            mux.check_hook_type(argv0="/repo/.git/hooks/commit-msg"),
-            "commit-msg",
-        )
+        self.assertEqual(mux.hook_type_from_invocation("/repo/.git/hooks/pre-commit"), "pre-commit")
+        self.assertEqual(mux.hook_type_from_invocation("/opt/toolbox/src/multiplexer"), "multiplexer")
+        self.assertEqual(mux.check_hook_type(argv0="/repo/.git/hooks/commit-msg"), "commit-msg")
 
 
 class MultiplexerRepoTests(unittest.TestCase):
@@ -145,12 +125,7 @@ class MultiplexerRepoTests(unittest.TestCase):
     def _write_recorder(self, hook_type, name):
         path = os.path.join(self._hooks_dir(hook_type), name)
         with open(path, "w") as handle:
-            handle.write(
-                "#!/bin/sh\n"
-                'out="${RECORD_DIR}/$(basename "$0")"\n'
-                'printf \'%s\\n\' "$*" > "$out.argv"\n'
-                'cat > "$out.stdin"\n'
-            )
+            handle.write('#!/bin/sh\nout="${RECORD_DIR}/$(basename "$0")"\nprintf \'%s\\n\' "$*" > "$out.argv"\ncat > "$out.stdin"\n')
         os.chmod(path, os.stat(path).st_mode | stat.S_IEXEC)
         return path
 
@@ -190,12 +165,7 @@ class MultiplexerRepoTests(unittest.TestCase):
         return dest
 
     def _invoke(self, hook_path, args=None, stdin=b""):
-        return _run(
-            [hook_path] + list(args or []),
-            cwd=self.repo,
-            env=self.env,
-            input_bytes=stdin,
-        )
+        return _run([hook_path] + list(args or []), cwd=self.repo, env=self.env, input_bytes=stdin)
 
     def test_copy_named_pre_commit_runs_subhooks(self):
         self._write_recorder("pre-commit", "01-record")
@@ -209,12 +179,7 @@ class MultiplexerRepoTests(unittest.TestCase):
         self._write_recorder("pre-commit", "01-record")
         hook = self._install_symlink("pre-commit")
         result = self._invoke(hook)
-        self.assertEqual(
-            result.returncode,
-            0,
-            "symlink install failed:\nstdout=%s\nstderr=%s"
-            % (result.stdout.decode("utf-8", "replace"), result.stderr.decode("utf-8", "replace")),
-        )
+        self.assertEqual(result.returncode, 0, "symlink install failed:\nstdout=%s\nstderr=%s" % (result.stdout.decode("utf-8", "replace"), result.stderr.decode("utf-8", "replace")))
         argv_path = os.path.join(self.record_dir, "01-record.argv")
         self.assertTrue(os.path.isfile(argv_path), result.stderr.decode("utf-8", "replace"))
 
